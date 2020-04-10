@@ -5,6 +5,7 @@
 var net = require('net');
 var url = require('url');
 var http = require('http');
+var auth = require('http-auth');
 var assert = require('assert');
 var debug = require('debug')('proxy');
 
@@ -36,9 +37,18 @@ module.exports = setup;
  * @api public
  */
 
-function setup(server, options) {
-	if (!server) server = http.createServer();
-	server.on('request', onrequest);
+function setup(options) {
+	var server;
+	if (!options.basicAuth) {
+		server = http.createServer(onrequest);
+	} else {
+		var basic = auth.basic(options.basicAuth);
+
+		basic.proxy = true;
+
+		server = http.createServer(basic, onrequest);
+	}
+
 	server.on('connect', onconnect);
 	return server;
 }
